@@ -1,0 +1,8 @@
+ene 14, 2015 12:46:56 PM facedetection.Bitacora registarEnBitacora
+INFO: Solicitud: {"url":'http://media.kairos.com/kairos-elizabeth.jpg',"gallery_name":"test","subject_id":"elizabeth","selector":"SETPOSE", "symmetricFill": "true"}
+ene 14, 2015 12:46:56 PM facedetection.Bitacora registarEnBitacora
+SEVERE: 200 OK - Message:  one or more required parameters are missing, ErrCode: 1002
+ene 14, 2015 12:47:02 PM facedetection.Bitacora registarEnBitacora
+INFO: Solicitud: {"url":'http://media.kairos.com/kairos-elizabeth.jpg',"gallery_name":"test","subject_id":"elizabeth","selector":"SETPOSE", "symmetricFill": "true"}
+ene 14, 2015 12:47:02 PM facedetection.Bitacora registarEnBitacora
+SEVERE: 200 OK - Message:  one or more required parameters are missing, ErrCode: 1002
