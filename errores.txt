@@ -6,3 +6,31 @@ ene 14, 2015 12:47:02 PM facedetection.Bitacora registarEnBitacora
 INFO: Solicitud: {"url":'http://media.kairos.com/kairos-elizabeth.jpg',"gallery_name":"test","subject_id":"elizabeth","selector":"SETPOSE", "symmetricFill": "true"}
 ene 14, 2015 12:47:02 PM facedetection.Bitacora registarEnBitacora
 SEVERE: 200 OK - Message:  one or more required parameters are missing, ErrCode: 1002
+ene 19, 2015 2:03:45 PM facedetection.Bitacora registarEnBitacora
+INFO: Solicitud ENROLL: {"url":"http://imageshack.com/a/img908/1719/c6OYjX.jpg","gallery_name":"tn_test","subject_id":"gabriel-intriago","selector":"SETPOSE", "symmetricFill": "true"}
+ene 19, 2015 2:03:45 PM facedetection.Bitacora registarEnBitacora
+SEVERE: 200 OK - Message: gallery_name invalid character(s) not allowed in the folllowing parameter:, ErrCode: 1000
+ene 19, 2015 2:05:00 PM facedetection.Bitacora registarEnBitacora
+INFO: Solicitud ENROLL: {"url":"http://imageshack.com/a/img908/1719/c6OYjX.jpg","gallery_name":"tn_test","subject_id":"gabriel-intriago","selector":"SETPOSE", "symmetricFill": "true"}
+ene 19, 2015 2:05:01 PM facedetection.Bitacora registarEnBitacora
+SEVERE: 200 OK - Message: gallery_name invalid character(s) not allowed in the folllowing parameter:, ErrCode: 1000
+ene 19, 2015 2:09:01 PM facedetection.Bitacora registarEnBitacora
+INFO: Solicitud ENROLL: {"url":"http://imageshack.com/a/img633/2036/hqnaVE.jpg","gallery_name":"TNtest","subject_id":"rosalina-bajaña","selector":"SETPOSE", "symmetricFill": "true"}
+ene 19, 2015 2:09:01 PM facedetection.Bitacora registarEnBitacora
+SEVERE: 200 OK - Message: subject_id invalid character(s) not allowed in the folllowing parameter:, ErrCode: 1000
+ene 19, 2015 2:09:01 PM facedetection.Bitacora registarEnBitacora
+INFO: Solicitud ENROLL: {"url":"http://imageshack.com/a/img909/3884/nHmq0g.jpg","gallery_name":"TNtest","subject_id":"rosalina-bajaña","selector":"SETPOSE", "symmetricFill": "true"}
+ene 19, 2015 2:09:01 PM facedetection.Bitacora registarEnBitacora
+SEVERE: 200 OK - Message: subject_id invalid character(s) not allowed in the folllowing parameter:, ErrCode: 1000
+ene 19, 2015 2:09:02 PM facedetection.Bitacora registarEnBitacora
+INFO: Solicitud ENROLL: {"url":"http://imageshack.com/a/img913/6017/pqE3TE.jpg","gallery_name":"TNtest","subject_id":"rosalina-bajaña","selector":"SETPOSE", "symmetricFill": "true"}
+ene 19, 2015 2:09:02 PM facedetection.Bitacora registarEnBitacora
+SEVERE: 200 OK - Message: subject_id invalid character(s) not allowed in the folllowing parameter:, ErrCode: 1000
+ene 19, 2015 2:09:02 PM facedetection.Bitacora registarEnBitacora
+INFO: Solicitud ENROLL: {"url":"http://imageshack.com/a/img673/5097/bR6ToE.jpg","gallery_name":"TNtest","subject_id":"rosalina-bajaña","selector":"SETPOSE", "symmetricFill": "true"}
+ene 19, 2015 2:09:02 PM facedetection.Bitacora registarEnBitacora
+SEVERE: 200 OK - Message: subject_id invalid character(s) not allowed in the folllowing parameter:, ErrCode: 1000
+ene 19, 2015 2:09:09 PM facedetection.Bitacora registarEnBitacora
+INFO: Solicitud ENROLL: {"url":"http://imageshack.com/a/img661/8805/LsPm5J.jpg","gallery_name":"TNtest","subject_id":"rosalina-bajaña","selector":"SETPOSE", "symmetricFill": "true"}
+ene 19, 2015 2:09:09 PM facedetection.Bitacora registarEnBitacora
+SEVERE: 200 OK - Message: subject_id invalid character(s) not allowed in the folllowing parameter:, ErrCode: 1000

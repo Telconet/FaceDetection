@@ -7,7 +7,10 @@ package facedetection;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -114,6 +117,7 @@ public class DeteccionCaras {
                 JSONArray ret = respuesta.getBody().getArray().getJSONObject(0).getJSONArray("images").getJSONObject(0).getJSONArray("faces");
               
                 //TODO: Procesar informacion caras.
+                //Usamos getJSONObject(index) para obtener el objeto JSON con los atributos de la cara (index es el numbero de cara).
                 return ret;
             }
             else{
@@ -165,8 +169,125 @@ public class DeteccionCaras {
     
     
     //Reconocer...
-    public void reconocer(String rutaImagen){
+    //Detecta caras en la foto, y nos devuelve informacion de cada una.
+    public JSONArray reconocer(String rutaImagen, String galeria, double probabilidadMinima){
+        try{
+            String probabilidad = "0.7";
+            
+            if(probabilidadMinima != 0){
+                probabilidad = Double.toString(probabilidadMinima);
+            }
+            
+            String request = "{\"url\":\"" + rutaImagen + "\",\"gallery_name\":\"" + galeria + "\",\"minHeadScale\":\".0625\",\"threshold\":\""+ probabilidad + "\",\"selector\":\"SETPOSE\"}";
+            
+           
+            HttpResponse<JsonNode> respuesta = Unirest.post("http://api.kairos.com/recognize")           
+            .header("Content-Type", "application/json")
+            .header("app_id", appId)
+            .header("app_key", appKey)
+            .header("Accept", "application/json")
+            .body(request)
+            .asJson();
+            
+            if(respuesta.getBody().toString().contains("success")){
+              
+                JSONArray ret = respuesta.getBody().getArray().getJSONObject(0).getJSONArray("images").getJSONObject(0).getJSONArray("candidates"); //.getJSONObject(0).getJSONArray("faces");
+              
+                //TODO: Procesar informacion caras.
+                this.procesarResultadosReconCaras(ret);
+                
+                return ret;
+            }
+            else{
+                Bitacora log = new Bitacora();
+                
+                //Obtenemos el arreglo del objeto JSON (Error)
+                JSONArray arreglo = respuesta.getBody().getArray();
+                JSONObject objetoJSON = arreglo.getJSONObject(0);
+                
+                //Luego obtenemos el objeto JSON con los errores y mensajes...
+                arreglo = objetoJSON.getJSONArray("Errors");
+                objetoJSON = arreglo.getJSONObject(0);
+                
+                //Extraemos los campos.
+                StringBuilder str = new StringBuilder();
+                Iterator<?> keys = objetoJSON.keys();
+                
+                str.append(respuesta.getStatus());
+                str.append(" ");
+                str.append(respuesta.getStatusText());
+                str.append(" - ");
+                
+                int i = 0;
+                //Extraemos los mensajes de error.
+                while( keys.hasNext() ){
+                    String key = (String)keys.next();
+                   
+                    if(i != 0){
+                        str.append(", ");
+                    }
+                    str.append(key);
+                    str.append(": ");
+                    str.append(objetoJSON.get(key).toString());
+                    i++;
+                }
+                                
+                log.registarEnBitacora("log_errores","errores.txt", "Solicitud DETECT: " + request, Bitacora.INFO);
+                log.registarEnBitacora("log_errores","errores.txt", str.toString(), Bitacora.SEVERE);
+                
+                //Escribir que paso
+                return null;
+            }
+        }
+        catch(Exception e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    
+    /**
+     * Procesamos el arreglo JSON para conteo de caras...
+     */
+    void procesarResultadosReconCaras(JSONArray resultados){
         
+        Map<String,ArrayList<Double>> multiMap = new HashMap<String,ArrayList<Double>>();
+        
+        for(int i = 0; i < resultados.length(); i++){
+            JSONObject objetoJSON = resultados.getJSONObject(i);
+            
+            //Extraemos los mensajes de error.
+            Iterator<?> keys = objetoJSON.keys();
+
+            //No tomar en cuenta enrollment_timestamp
+            //Necesitamos un multimap para guardar los porcentajes de match
+            //para cada nombre
+           
+            
+            while( keys.hasNext() ){
+                String key = (String)keys.next();
+                
+                
+                if(!key.equalsIgnoreCase("enrollment_timestamp")){
+                    double probabilidad = Double.parseDouble(objetoJSON.get(key).toString());
+                    
+                    if(multiMap.get(key) == null){
+                        //Si no tenemos lista para este nombre, la agregamos
+                        ArrayList<Double> arreglo = new ArrayList<>();
+                        arreglo.add(probabilidad);
+                        multiMap.put(key, arreglo);
+                    }
+                    else{
+                        //Obtenemos el arreglo, y agregamos el valor
+                        ArrayList<Double> arreglo = multiMap.get(key);
+                        arreglo.add(probabilidad);
+                    }
+                    
+                   
+                    System.out.println(key.toString() + " - " +objetoJSON.get(key).toString());
+                }
+            }
+        }
     }
     
 }
