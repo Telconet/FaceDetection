@@ -34,3 +34,11 @@ ene 19, 2015 2:09:09 PM facedetection.Bitacora registarEnBitacora
 INFO: Solicitud ENROLL: {"url":"http://imageshack.com/a/img661/8805/LsPm5J.jpg","gallery_name":"TNtest","subject_id":"rosalina-bajaña","selector":"SETPOSE", "symmetricFill": "true"}
 ene 19, 2015 2:09:09 PM facedetection.Bitacora registarEnBitacora
 SEVERE: 200 OK - Message: subject_id invalid character(s) not allowed in the folllowing parameter:, ErrCode: 1000
+ene 26, 2015 2:45:11 PM facedetection.Bitacora registarEnBitacora
+INFO: Solicitud DETECT: {"url":"https://www.dropbox.com/s/dpvc259639kw1yk/35.jpg?dl=0","gallery_name":"TNtest","minHeadScale":".0625","threshold":"0.6","selector":"SETPOSE"}
+ene 26, 2015 2:45:11 PM facedetection.Bitacora registarEnBitacora
+SEVERE: 200 OK - Message: an invalid image was sent must be jpg or png format, ErrCode: 5000
+ene 26, 2015 2:46:14 PM facedetection.Bitacora registarEnBitacora
+INFO: Solicitud DETECT: {"url":"https://dl-web.dropbox.com/get/Aplicaciones/tnFace/Public/35.jpg?_subject_uid=34778817&w=AAB-EjHOb6uZkb1q9APtJBnhpKtzKCqxo-piDLuQ2buu9A","gallery_name":"TNtest","minHeadScale":".0625","threshold":"0.6","selector":"SETPOSE"}
+ene 26, 2015 2:46:14 PM facedetection.Bitacora registarEnBitacora
+SEVERE: 200 OK - Message: an invalid image was sent must be jpg or png format, ErrCode: 5000

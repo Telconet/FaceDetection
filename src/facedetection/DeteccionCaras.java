@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -170,7 +171,8 @@ public class DeteccionCaras {
     
     //Reconocer...
     //Detecta caras en la foto, y nos devuelve informacion de cada una.
-    public JSONArray reconocer(String rutaImagen, String galeria, double probabilidadMinima){
+    //Devolvemos el id (nombre) de la cara más probable.
+    public String reconocer(String rutaImagen, String galeria, double probabilidadMinima){
         try{
             String probabilidad = "0.7";
             
@@ -180,7 +182,6 @@ public class DeteccionCaras {
             
             String request = "{\"url\":\"" + rutaImagen + "\",\"gallery_name\":\"" + galeria + "\",\"minHeadScale\":\".0625\",\"threshold\":\""+ probabilidad + "\",\"selector\":\"SETPOSE\"}";
             
-           
             HttpResponse<JsonNode> respuesta = Unirest.post("http://api.kairos.com/recognize")           
             .header("Content-Type", "application/json")
             .header("app_id", appId)
@@ -194,9 +195,8 @@ public class DeteccionCaras {
                 JSONArray ret = respuesta.getBody().getArray().getJSONObject(0).getJSONArray("images").getJSONObject(0).getJSONArray("candidates"); //.getJSONObject(0).getJSONArray("faces");
               
                 //TODO: Procesar informacion caras.
-                this.procesarResultadosReconCaras(ret);
-                
-                return ret;
+                String persona = this.procesarResultadosCarasReconocidas(ret);
+                return persona;
             }
             else{
                 Bitacora log = new Bitacora();
@@ -249,45 +249,96 @@ public class DeteccionCaras {
     /**
      * Procesamos el arreglo JSON para conteo de caras...
      */
-    void procesarResultadosReconCaras(JSONArray resultados){
-        
-        Map<String,ArrayList<Double>> multiMap = new HashMap<String,ArrayList<Double>>();
-        
-        for(int i = 0; i < resultados.length(); i++){
-            JSONObject objetoJSON = resultados.getJSONObject(i);
-            
-            //Extraemos los mensajes de error.
-            Iterator<?> keys = objetoJSON.keys();
+    private String procesarResultadosCarasReconocidas(JSONArray resultados){
+        try{
+            Map<String,ArrayList<Double>> multiMap = new HashMap<String,ArrayList<Double>>();
 
+            for(int i = 0; i < resultados.length(); i++){
+                JSONObject objetoJSON = resultados.getJSONObject(i);
+
+                //Extraemos los mensajes de error.
+                Iterator<?> keys = objetoJSON.keys();
+
+                //No tomar en cuenta enrollment_timestamp
+                //Necesitamos un multimap para guardar los porcentajes de match
+                //para cada nombre
+
+                while( keys.hasNext() ){
+                    String key = (String)keys.next();
+
+                    if(!key.equalsIgnoreCase("enrollment_timestamp")){
+                        double probabilidad = Double.parseDouble(objetoJSON.get(key).toString());
+
+                        if(multiMap.get(key) == null){
+                            //Si no tenemos lista para este nombre, la agregamos
+                            ArrayList<Double> arreglo = new ArrayList<>();
+                            arreglo.add(probabilidad);
+                            multiMap.put(key, arreglo);
+                        }
+                        else{
+                            //Obtenemos el arreglo, y agregamos el valor
+                            ArrayList<Double> arreglo = multiMap.get(key);
+                            arreglo.add(probabilidad);
+                        }
+
+                        //System.out.println(key.toString() + " - " +objetoJSON.get(key).toString());
+                    }
+                }
+                
+                String persona = null;
+                if(!multiMap.isEmpty()){
+                   persona = this.tabularResultdaos(multiMap);
+                   return persona;
+                }
+            }
+            return null;
+        }
+        catch(Exception e){
+            Bitacora log = new Bitacora();
+            log.registarEnBitacora("excepciones","excepciones.txt", e.getMessage(), Bitacora.SEVERE);
+            return null;
+        }
+    } 
+    
+    /**
+     * Este metodo combina los resultados devueltos por el servidor de Kairos.
+     */
+    private String tabularResultdaos(Map<String,ArrayList<Double>> resultados){
+       try{
+           
             //No tomar en cuenta enrollment_timestamp
             //Necesitamos un multimap para guardar los porcentajes de match
             //para cada nombre
-           
-            
-            while( keys.hasNext() ){
-                String key = (String)keys.next();
+           ArrayList<String> nombres = new ArrayList<>();
+           ArrayList<Double> promedios = new ArrayList<>();
+
+            for(Entry<String, ArrayList<Double>> item: resultados.entrySet()){
+                nombres.add(item.getKey());                 //nombre de la persona
+                ArrayList listaProbabilidades = resultados.get(item.getKey());
                 
+                Iterator<?> iterador = listaProbabilidades.iterator();
                 
-                if(!key.equalsIgnoreCase("enrollment_timestamp")){
-                    double probabilidad = Double.parseDouble(objetoJSON.get(key).toString());
-                    
-                    if(multiMap.get(key) == null){
-                        //Si no tenemos lista para este nombre, la agregamos
-                        ArrayList<Double> arreglo = new ArrayList<>();
-                        arreglo.add(probabilidad);
-                        multiMap.put(key, arreglo);
-                    }
-                    else{
-                        //Obtenemos el arreglo, y agregamos el valor
-                        ArrayList<Double> arreglo = multiMap.get(key);
-                        arreglo.add(probabilidad);
-                    }
-                    
-                   
-                    System.out.println(key.toString() + " - " +objetoJSON.get(key).toString());
+                double promedio = 0.0;
+                int i = 0;
+                
+                //Calcula promedio...
+                while(iterador.hasNext()){
+                    Double valor = (Double)iterador.next();
+                    promedio += valor.doubleValue();
+                    i++;
                 }
+                promedio = promedio / i;
+                promedios.add(promedio);         
             }
-        }
+            
+            //TODO devolver nombre de persona más probable
+            
+            return "";
+       }
+       catch(Exception e){
+           Bitacora log = new Bitacora();
+           log.registarEnBitacora("excepciones","excepciones.txt", e.getMessage(), Bitacora.SEVERE);
+           return null;
+       }
     }
-    
 }

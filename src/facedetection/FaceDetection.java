@@ -8,23 +8,42 @@ package facedetection;
  *
  * @author Eduardo
  */
+import com.dropbox.core.DbxAppInfo;
+import com.dropbox.core.DbxAuthFinish;
+import com.dropbox.core.DbxClient;
+import com.dropbox.core.DbxEntry;
+import com.dropbox.core.DbxException;
+import com.dropbox.core.DbxRequestConfig;
+import com.dropbox.core.DbxWebAuthNoRedirect;
+import com.dropbox.core.DbxWriteMode;
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
- 
-import javax.net.ssl.HttpsURLConnection;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import java.util.ArrayList;
+import java.util.Locale;
+import org.opencv.core.Mat;
+import org.opencv.highgui.Highgui;
+import org.opencv.objdetect.CascadeClassifier;
+import org.opencv.core.*;
+
+
 
 public class FaceDetection {
 
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException, DbxException {
         // TODO code application logic here
+        
+        //Cargamos la librerias nativas
+        System.out.println(System.getProperty("java.library.path"));
+        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
         
         //NO usar underscore en nombre de galeria
         String nombreGaleria = "TNtest";
@@ -70,141 +89,119 @@ public class FaceDetection {
         
         DeteccionCaras cliente = new DeteccionCaras(appId, appKey);
         
-        //YA enrolamos...
-        /*for(int i = 0; i < imagenesEnrolamiento.length; i++){
-            String idSujeto = "";
-            switch(i){
-                case 0:
-                    idSujeto = "gabriel-intriago";
-                    break;
-                case 1:
-                    idSujeto = "claudia-rojas";
-                    break;
-                case 2:
-                    idSujeto = "gabriel-intriago";
-                    break;
-                case 3:
-                    idSujeto = "claudia-rojas";
-                    break;
-                case 4:
-                    idSujeto = "claudia-rojas";
-                    break;
-                case 5:
-                    idSujeto = "claudia-rojas";
-                    break;
-                case 6:
-                    idSujeto = "duval-medina";
-                    break;
-                case 7:
-                    idSujeto = "duval-medina";
-                    break;
-                case 8:
-                    idSujeto = "claudia-rojas";
-                    break;
-                case 9:
-                    idSujeto = "duval-medina";
-                    break;
-                case 10:
-                    idSujeto = "duval-medina";
-                    break;
-                case 11:
-                    idSujeto = "rosalina-bajana";
-                    break;
-                case 12:
-                    idSujeto = "rosalina-bajana";
-                    break;
-                case 13:
-                    idSujeto = "rosalina-bajana";
-                    break;
-                case 14:
-                    idSujeto = "rosalina-bajana";
-                    break;
-                case 15:
-                    idSujeto = "duval-medina";
-                    break;
-                case 16:
-                    idSujeto = "rosalina-bajana";
-                    break;
-                case 17:
-                    idSujeto = "maria-murillo";
-                    break;
-                case 18:
-                    idSujeto = "maria-murillo";
-                    break;
-                case 19:
-                    idSujeto = "maria-murillo";
-                    break;
-                case 20:
-                    idSujeto = "maria-murillo";
-                    break;
-                case 21:
-                    idSujeto = "maria-murillo";
-                    break;
-                case 22:
-                    idSujeto = "maria-murillo";
-                    break;
-                case 23:
-                    idSujeto = "rosalina-bajana";
-                    break;
-                case 24:
-                    idSujeto = "eduardo-murillo";
-                    break;
-                case 25:
-                    idSujeto = "eduardo-murillo";
-                    break;
-                case 26:
-                    idSujeto = "eduardo-murillo";
-                    break;
-                case 27:
-                    idSujeto = "eduardo-murillo";
-                    break;
-                case 28:
-                    idSujeto = "eduardo-murillo";
-                    break;
-                case 29:
-                    idSujeto = "eduardo-murillo";
-                    break;
-                case 30:
-                    idSujeto = "eduardo-murillo";
-                    break;
-                case 31:
-                    idSujeto = "gabriel-intriago";
-                    break;
-                case 32:
-                    idSujeto = "gabriel-intriago";
-                    break;
-                case 33:
-                    idSujeto = "gabriel-intriago";
-                    break;
-                case 34:
-                    idSujeto = "gabriel-intriago";
-                    break;
-                default:
-                    idSujeto = "";
-                    break;
-            }
+        cliente.reconocer("https://www.dropbox.com/s/f0lftfsmaq63sza/35.jpg?dl=1", nombreGaleria, 0.6);
+        
+        //Autorizacion dropbox...
+        String accessToken = null;
+        File archivoToken = new File("token.txt");
+        
+        String dbxKey = "cuiclds3bj72a53";
+        String dbxSecret = "m44th47fwrn9d0t";
+        DbxAppInfo appInfo = new DbxAppInfo(dbxKey, dbxSecret);
+        DbxRequestConfig config = new DbxRequestConfig("tnFace/1.0", Locale.getDefault().toString());
             
-            if(idSujeto.equals("")){
+        if(!archivoToken.exists() ){
+            //Inicializamos la cuenta dropbo           
+            DbxWebAuthNoRedirect webAuth = new DbxWebAuthNoRedirect(config, appInfo);
+
+            String authorizeUrl = webAuth.start();
+            System.out.println("1. Go to: " + authorizeUrl);
+            System.out.println("2. Click \"Allow\" (you might have to log in first)");
+            System.out.println("3. Copy the authorization code.");
+            String code = new BufferedReader(new InputStreamReader(System.in)).readLine().trim();
+
+            DbxAuthFinish authFinish = webAuth.finish(code);
+            accessToken = authFinish.accessToken;
+
+            //Guardamos el token...
+            BufferedWriter escritor = new BufferedWriter(new FileWriter(archivoToken));
+            escritor.write(accessToken);
+            escritor.close();
+            
+        }
+        else{
+            try{
+                //Leemos el string de autorizacion...
+                FileReader lectorArchivo = new FileReader(archivoToken);
+                BufferedReader lector = new BufferedReader(lectorArchivo);
+
+                //solo hay una linea en el archivo...
+                 accessToken = lector.readLine().trim();
+
+                 lector.close();
+            }
+            catch(IOException e){
+                Bitacora log = new Bitacora();
+                log.registarEnBitacora("errores.txt", "errores.txt", e.getMessage() + ": No se puedo leer el token de autorización Dropbox", Bitacora.SEVERE);
                 System.exit(-1);
             }
-            
-            int status = cliente.enrolar(imagenesEnrolamiento[i], idSujeto, nombreGaleria);
-            
-            if(status == 0){
-                System.out.println("OK. Persona i: " + i  + ", URL: " + imagenesEnrolamiento[i] + " enrolada.");
-            }
-            else{
-                System.out.println("ERROR. Persona i: " + i  + ", URL: " + imagenesEnrolamiento[i] + " NO enrolada.");
-            }
-        }*/
+        }
         
-        //JSONArray detectar = cliente.detectar("http://imageshack.com/a/img661/1023/0gjNN4.jpg");
         
+        //Creamos el cliente Dropbox, si ya tenemos el token de autorización
+        DbxClient clienteDbx = new DbxClient(config, accessToken);
+        //System.out.println("Linked account: " + clienteDbx.getAccountInfo().displayName);
+                
+        //Ahora intentamos subir un archivos...
+        File archivoASubir = new File("camera_images/35.jpg");
+        
+        if(!archivoASubir.exists()){
+                Bitacora log = new Bitacora();
+                log.registarEnBitacora("errores.txt", "errores.txt", "El archivo no existe", Bitacora.WARNING);
+        }
+        
+        FileInputStream inputStream = new FileInputStream(archivoASubir);
+        String url = "";
+        try {
+            DbxEntry.File uploadedFile = clienteDbx.uploadFile("/35.jpg", DbxWriteMode.add(), archivoASubir.length(), inputStream);
+            System.out.println("Uploaded: " + uploadedFile.toString());
+            
+             url = clienteDbx.createShareableUrl("/35.jpg");
+            String url2 = url;
+        } finally {
+            inputStream.close();
+        }
+        
+        //Mandamos foto a 
+        
+        
+        
+        
+        //Ahora en cada cuadro buscamos si hay caras (para no usar llamadas innecesarias), para mandarlas a Kairos...
+        //Debemos haber cargado las librerias nativas antes de usar estos metodos..
+        CascadeClassifier faceDetector;        
 
-        //JSONObject ed = detectar.getJSONObject(0);
+        String recurso = FaceDetection.class.getResource("recursos/haarcascade_frontalface_alt.xml").getPath();
+        faceDetector = new CascadeClassifier(recurso);
         
-        cliente.reconocer("http://imagizer.imageshack.us/a/img661/912/3iBhgP.jpg", nombreGaleria , 0.7);
+        //Cogemos 200 cuadros
+        ArrayList<Mat> arregloImagenes = new ArrayList<>(200);
+        Camara camara2 = new Camara("rtsp://192.168.137.172/profile2/media.smp");
+        camara2.abrirCamara();      //empieza a enviar datos.
+        for(int i = 0; i < 200; i++){
+            Mat imagen = camara2.obtenerCuadro();
+            arregloImagenes.add(imagen);
+        }
         
-        int i= 2;
+        //Ahora en cada cuadro buscamos si hay caras (para no usar llamadas innecesarias), para mandarlas a Kairos...        
+        Mat imagen;
+        for(int i = 0; i < 200; i++ ){
+             imagen = arregloImagenes.get(i);
+
+             Highgui.imwrite("camera_images/camera" + i + ".jpg", imagen);
+             
+             //debemos subir fotos a servidor publico para que Kairos pueda acceder...
+             
+             MatOfRect faceDetections = new MatOfRect();
+             faceDetector.detectMultiScale(imagen, faceDetections);
+             
+             //Detectamos la cara
+            faceDetector.detectMultiScale(imagen, faceDetections);
+ 
+            System.out.println(String.format(i + ": Se detectaron %s caras", faceDetections.toArray().length));
+             
+        }
+        camara2.cerrarCamara();
+        return;
     }
 }

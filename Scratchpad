@@ -1,0 +1,134 @@
+//YA enrolamos...
+        /*for(int i = 0; i < imagenesEnrolamiento.length; i++){
+            String idSujeto = "";
+            switch(i){
+                case 0:
+                    idSujeto = "gabriel-intriago";
+                    break;
+                case 1:
+                    idSujeto = "claudia-rojas";
+                    break;
+                case 2:
+                    idSujeto = "gabriel-intriago";
+                    break;
+                case 3:
+                    idSujeto = "claudia-rojas";
+                    break;
+                case 4:
+                    idSujeto = "claudia-rojas";
+                    break;
+                case 5:
+                    idSujeto = "claudia-rojas";
+                    break;
+                case 6:
+                    idSujeto = "duval-medina";
+                    break;
+                case 7:
+                    idSujeto = "duval-medina";
+                    break;
+                case 8:
+                    idSujeto = "claudia-rojas";
+                    break;
+                case 9:
+                    idSujeto = "duval-medina";
+                    break;
+                case 10:
+                    idSujeto = "duval-medina";
+                    break;
+                case 11:
+                    idSujeto = "rosalina-bajana";
+                    break;
+                case 12:
+                    idSujeto = "rosalina-bajana";
+                    break;
+                case 13:
+                    idSujeto = "rosalina-bajana";
+                    break;
+                case 14:
+                    idSujeto = "rosalina-bajana";
+                    break;
+                case 15:
+                    idSujeto = "duval-medina";
+                    break;
+                case 16:
+                    idSujeto = "rosalina-bajana";
+                    break;
+                case 17:
+                    idSujeto = "maria-murillo";
+                    break;
+                case 18:
+                    idSujeto = "maria-murillo";
+                    break;
+                case 19:
+                    idSujeto = "maria-murillo";
+                    break;
+                case 20:
+                    idSujeto = "maria-murillo";
+                    break;
+                case 21:
+                    idSujeto = "maria-murillo";
+                    break;
+                case 22:
+                    idSujeto = "maria-murillo";
+                    break;
+                case 23:
+                    idSujeto = "rosalina-bajana";
+                    break;
+                case 24:
+                    idSujeto = "eduardo-murillo";
+                    break;
+                case 25:
+                    idSujeto = "eduardo-murillo";
+                    break;
+                case 26:
+                    idSujeto = "eduardo-murillo";
+                    break;
+                case 27:
+                    idSujeto = "eduardo-murillo";
+                    break;
+                case 28:
+                    idSujeto = "eduardo-murillo";
+                    break;
+                case 29:
+                    idSujeto = "eduardo-murillo";
+                    break;
+                case 30:
+                    idSujeto = "eduardo-murillo";
+                    break;
+                case 31:
+                    idSujeto = "gabriel-intriago";
+                    break;
+                case 32:
+                    idSujeto = "gabriel-intriago";
+                    break;
+                case 33:
+                    idSujeto = "gabriel-intriago";
+                    break;
+                case 34:
+                    idSujeto = "gabriel-intriago";
+                    break;
+                default:
+                    idSujeto = "";
+                    break;
+            }
+            
+            if(idSujeto.equals("")){
+                System.exit(-1);
+            }
+            
+            int status = cliente.enrolar(imagenesEnrolamiento[i], idSujeto, nombreGaleria);
+            
+            if(status == 0){
+                System.out.println("OK. Persona i: " + i  + ", URL: " + imagenesEnrolamiento[i] + " enrolada.");
+            }
+            else{
+                System.out.println("ERROR. Persona i: " + i  + ", URL: " + imagenesEnrolamiento[i] + " NO enrolada.");
+            }
+        }*/
+        
+        //JSONArray detectar = cliente.detectar("http://imageshack.com/a/img661/1023/0gjNN4.jpg");
+        
+
+        //JSONObject ed = detectar.getJSONObject(0);
+        
+        //cliente.reconocer("http://imagizer.imageshack.us/a/img661/912/3iBhgP.jpg", nombreGaleria , 0.7);
