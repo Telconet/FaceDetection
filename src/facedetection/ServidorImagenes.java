@@ -1,3 +1,5 @@
+package facedetection;
+
 
 import com.dropbox.core.DbxAppInfo;
 import com.dropbox.core.DbxAuthFinish;
@@ -7,7 +9,6 @@ import com.dropbox.core.DbxException;
 import com.dropbox.core.DbxRequestConfig;
 import com.dropbox.core.DbxWebAuthNoRedirect;
 import com.dropbox.core.DbxWriteMode;
-import facedetection.Bitacora;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -36,6 +37,11 @@ public class ServidorImagenes {
     private DbxRequestConfig config;
     private DbxAppInfo appInfo;
     
+    /**
+     * Constructor
+     * @param dbxKey la llave de la aplicacion propocionada por Dropbox
+     * @param dbxSecret el secrete de la aplicacion porporcionado por Dropbox
+     */
     public ServidorImagenes(String dbxKey, String dbxSecret){
         this.dbxKey = dbxKey;
         this.dbxSecret = dbxSecret;
@@ -55,12 +61,15 @@ public class ServidorImagenes {
      */
     private boolean autenticarAplicacion(String rutaArchivoToken, String appStr){
         
-        File archivoToken = new File(rutaArchivoToken);
+        File archivoToken = null;
+        if(rutaArchivoToken != null){
+            archivoToken = new File(rutaArchivoToken);
+        }
         
         this.appInfo = new DbxAppInfo(this.dbxKey, this.dbxSecret);
         this.config = new DbxRequestConfig(appStr, Locale.getDefault().toString());           //"tnFace/1.0"
         
-        if(!archivoToken.exists()){
+        if(rutaArchivoToken == null || !archivoToken.exists()){
             try{
                 //Inicializamos la cuenta dropbo           
                 DbxWebAuthNoRedirect webAuth = new DbxWebAuthNoRedirect(config, appInfo);
@@ -183,12 +192,17 @@ public class ServidorImagenes {
     }
     
     
+    /**
+     * Retor
+     * @param rutaDbx
+     * @return la URL para descarga del archivo
+     */
     public String obtenerURLDescarga(String rutaDbx){
         try{
             if(this.cliente != null){
                String url = this.cliente.createShareableUrl("/35.jpg");
                
-               url = url.substring(0, url.length() - 2) + "1";              //cambiamos de ?dl=0 a ?dl=1
+               url = url.substring(0, url.length() - 1) + "1";              //cambiamos de ?dl=0 a ?dl=1
                return url;
             }
             else return null;

@@ -19,7 +19,6 @@ public class Camara {
     private int dispositivo;
     private VideoCapture camara;
     private boolean camaraAbierta;
-    private Mat frame;
     
     public Camara(String url){
         this.urlCamara = url;

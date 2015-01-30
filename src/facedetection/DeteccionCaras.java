@@ -32,7 +32,13 @@ public class DeteccionCaras {
     }
             
             
-    //Enrola una persona con el id dado.
+    /**
+     * Enrola una persona con el id dado.
+     * @param rutaImagen
+     * @param idSujeto
+     * @param galeria
+     * @return 
+     */
     public int enrolar(String rutaImagen, String idSujeto, String galeria){
         
         try{
@@ -98,13 +104,16 @@ public class DeteccionCaras {
         }
     }
     
-    //Detecta caras en la foto, y nos devuelve informacion de cada una.
+    /**
+     * Detecta caras en la foto, y nos devuelve informacion de cada una.
+     * @param rutaImagen
+     * @return 
+     */
     public JSONArray detectar(String rutaImagen){
         try{
             
             String request = "{\"url\":\"" + rutaImagen + "\",\"selector\":\"SETPOSE\",\"minHeadScale\":\".0625\"}";
-            
-           
+                       
             HttpResponse<JsonNode> respuesta = Unirest.post("http://api.kairos.com/detect")           
             .header("Content-Type", "application/json")
             .header("app_id", appId)
@@ -169,9 +178,14 @@ public class DeteccionCaras {
     }
     
     
-    //Reconocer...
-    //Detecta caras en la foto, y nos devuelve informacion de cada una.
-    //Devolvemos el id (nombre) de la cara más probable.
+    /**
+     *Detecta caras en la foto, y nos devuelve informacion de cada una.
+     *Devolvemos el id (nombre) de la cara más probable.
+     * @param rutaImagen
+     * @param galeria
+     * @param probabilidadMinima
+     * @return 
+     */
     public String reconocer(String rutaImagen, String galeria, double probabilidadMinima){
         try{
             String probabilidad = "0.7";
@@ -247,7 +261,9 @@ public class DeteccionCaras {
     
     
     /**
-     * Procesamos el arreglo JSON para conteo de caras...
+     * Extraemos los resultados devueltos por Kairos dentro del objeto JSON.
+     * @param resultados
+     * @return 
      */
     private String procesarResultadosCarasReconocidas(JSONArray resultados){
         try{
@@ -301,7 +317,10 @@ public class DeteccionCaras {
     } 
     
     /**
-     * Este metodo combina los resultados devueltos por el servidor de Kairos.
+     * Con los resultados de Kairos, los combinamos para obtener el nombre de la persona mas
+     * probable.
+     * @param resultados
+     * @return 
      */
     private String tabularResultdaos(Map<String,ArrayList<Double>> resultados){
        try{
@@ -309,6 +328,8 @@ public class DeteccionCaras {
             //No tomar en cuenta enrollment_timestamp
             //Necesitamos un multimap para guardar los porcentajes de match
             //para cada nombre
+           double promedioMasAlto = 0.0;
+           int j = 0;
            ArrayList<String> nombres = new ArrayList<>();
            ArrayList<Double> promedios = new ArrayList<>();
 
@@ -328,12 +349,24 @@ public class DeteccionCaras {
                     i++;
                 }
                 promedio = promedio / i;
-                promedios.add(promedio);         
+                promedios.add(promedio);  
+                
+                
+                if(promedio > promedioMasAlto){
+                    j++;
+                }
             }
             
             //TODO devolver nombre de persona más probable
-            
-            return "";
+            try{
+                String personaProbable = nombres.get(j);
+                String[] nombreApellido = personaProbable.split("-");
+                return nombreApellido[0] + " " + nombreApellido[1];
+            }
+            catch(IndexOutOfBoundsException e){
+                //No encontramos a nadie
+                return "nadie";
+            }
        }
        catch(Exception e){
            Bitacora log = new Bitacora();
