@@ -169,7 +169,7 @@ public class ServidorImagenes {
                 String url = "";
 
                 try {
-                    DbxEntry.File uploadedFile = cliente.uploadFile(rutaDbx, DbxWriteMode.add(), archivoASubir.length(), inputStream);
+                    DbxEntry.File uploadedFile = cliente.uploadFile(rutaDbx, DbxWriteMode.force(), archivoASubir.length(), inputStream);
                     System.out.println("Uploaded: " + uploadedFile.toString());
                 } finally {
                     inputStream.close();
@@ -200,10 +200,13 @@ public class ServidorImagenes {
     public String obtenerURLDescarga(String rutaDbx){
         try{
             if(this.cliente != null){
-               String url = this.cliente.createShareableUrl("/35.jpg");
-               
-               url = url.substring(0, url.length() - 1) + "1";              //cambiamos de ?dl=0 a ?dl=1
-               return url;
+               String url = this.cliente.createShareableUrl(rutaDbx); 
+
+                if(url != null){
+                    url = url.substring(0, url.length() - 1) + "1";              //cambiamos de ?dl=0 a ?dl=1    //nullpointerexception...
+                    return url;
+                }
+                else return null;
             }
             else return null;
         }

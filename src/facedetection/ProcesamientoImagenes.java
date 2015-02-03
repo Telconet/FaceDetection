@@ -6,6 +6,8 @@ package facedetection;
 
 import java.io.InputStream;
 import java.net.URL;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
@@ -27,12 +29,13 @@ public class ProcesamientoImagenes implements Runnable{
     private ServidorImagenes imgServer;
     private DeteccionCaras faceServer;
     private String galeria;
-    private int probabilidad;
+    private double probabilidad;
     private String urlImagen;
     private String persona;
     private String directorio;
+   
     
-    public ProcesamientoImagenes(Mat imagen, int indice, ServidorImagenes imgServer, DeteccionCaras faceServer, String galeria, String directorioTrabajo){
+    public ProcesamientoImagenes(Mat imagen, int indice, ServidorImagenes imgServer, DeteccionCaras faceServer, String galeria, String directorioTrabajo, double probabilidad){
         this.imagen = imagen;
         this.indice = indice;
         this.imgServer = imgServer;
@@ -40,6 +43,7 @@ public class ProcesamientoImagenes implements Runnable{
         this.urlImagen = null;
         this.persona = null;
         this.galeria = galeria;
+        this.probabilidad = probabilidad;
         
         //Obtenemos el directorio de trabajo
         /*URL location = ProcesamientoImagenes.class.getProtectionDomain().getCodeSource().getLocation();
@@ -49,7 +53,7 @@ public class ProcesamientoImagenes implements Runnable{
         this.directorio = directorioTrabajo;
     }
     
-    public ProcesamientoImagenes(String urlImagen, int indice, ServidorImagenes imgServer, DeteccionCaras faceServer, String galeria, String directorioTrabajo){
+    public ProcesamientoImagenes(String urlImagen, int indice, ServidorImagenes imgServer, DeteccionCaras faceServer, String galeria, String directorioTrabajo, double probabilidad){
         this.imagen = null;
         this.indice = indice;
         this.imgServer = imgServer;
@@ -57,7 +61,8 @@ public class ProcesamientoImagenes implements Runnable{
         this.urlImagen = urlImagen;
         this.persona = null;
         this.galeria = galeria;
-        this.directorio = directorioTrabajo;        
+        this.directorio = directorioTrabajo;  
+        this.probabilidad = probabilidad;
     }
 
     @Override
@@ -94,27 +99,51 @@ public class ProcesamientoImagenes implements Runnable{
 
        //Detectar...
        if(faceDetections.toArray().length > 0){
+            //En esta seccion escribimos la imagen a disco con un cuadro señalando la cara..
+            Highgui.imwrite("camera_images/camera" + indice + ".jpg", imagen);
            
             for (Rect rect : faceDetections.toArray()) {
             Core.rectangle(imagen, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height),
                     new Scalar(0, 255, 0));
             }
 
-            String filename = "detected_faces/output" + this.indice + ".jpg";
-            System.out.println(String.format("Escribiendo %s", filename));
-            Highgui.imwrite(filename, imagen);
-           
+           String filename = "detected_faces/output" + this.indice + ".jpg";
+            
+           Highgui.imwrite(filename, imagen);
+           System.out.println(String.format("Escribiendo %s", filename));
+           //Fin del dibujo del cuadro de deteccion.
            
            //Si hay caras, mandamos a Kairos...
            //Subimos fotos a Dropbox
+           this.imgServer.subirArchivo("camera_images/camera" + indice + ".jpg", "/camera" + indice + ".jpg");
+           String url = this.imgServer.obtenerURLDescarga("/camera" + indice + ".jpg");
            
-           //Highgui.imwrite("camera_images/camera" + indice + ".jpg", imagen);
-           //this.imgServer.subirArchivo("camera_images/camera" + indice + ".jpg", "/camera" + indice + ".jpg");
-           //String url = this.imgServer.obtenerURLDescarga("/camera" + indice + ".jpg");
+           synchronized(FaceDetection.mutex){
+                System.out.println("Hilo " + indice + " adquirió el mutex");
+                if(!FaceDetection.personaEncontrada){
+                     System.out.println("Imagen " + this.indice + " enviada a Kairos...");
+                     String nombre = this.faceServer.reconocer(url, this.galeria, this.probabilidad);
+                     
+                     if(!nombre.equals("nadie")){
+
+
+                         FaceDetection.personaEncontrada = true;
+
+
+                         JFrame frame = new JFrame( "FaceRecon" );
+                         JOptionPane.showMessageDialog(frame, "¡Hola, " + nombre + "!");
+                     }
+                     else{
+                         System.out.println("No se reconoció a nadie en la imagen " + indice);
+                     }
+                }
+           }
+           System.out.println("Hilo " + indice + " liberó el mutex");
            
-           //String nombre = this.faceServer.reconocer(url, this.galeria, probabilidad);
-           //System.out.println("Imangen camera" + this.indice + "enviada a Kairos");
             
+       }
+       else{
+           System.out.println("No se detecto cara en la imagen " + indice);
        }
     }
     

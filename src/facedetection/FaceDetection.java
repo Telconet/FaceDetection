@@ -14,12 +14,15 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import org.opencv.core.*;
 
 
 
 public class FaceDetection {
+    
+    public static boolean personaEncontrada = false;          //solo para pruebas
+    public static final Object mutex = new Object();
+    
 
     /**
      * @param args the command line arguments
@@ -43,7 +46,12 @@ public class FaceDetection {
         String dbxKey = "cuiclds3bj72a53";
         String dbxSecret = "m44th47fwrn9d0t";
         ServidorImagenes servidorImagenes = new ServidorImagenes(dbxKey, dbxSecret);
-
+        servidorImagenes.conectarADropbox("token.txt","tnFace/1.0");
+        
+        //servidorImagenes.subirArchivo("C:\\Users\\Eduardo\\Documents\\NetBeansProjects\\FaceDetection\\camera_images_TEST\\35.jpg", "/35.jpg");
+        /*String url2 = servidorImagenes.obtenerURLDescarga("/35.jpg");
+        clienteDeteccionCaras.reconocer(url2,nombreGaleria, 0.6);*/
+        
         //probar los hilos
         long millis_before = System.currentTimeMillis();
         ExecutorService ejecutor = Executors.newFixedThreadPool(13);     //4 threads al mismo tiempo...
@@ -64,8 +72,8 @@ public class FaceDetection {
         System.out.println(directorio);
         
         //Creamos los hilos...
-        for(int i = 0; i < 200; i++){
-            ProcesamientoImagenes faceDt = new ProcesamientoImagenes("camera_images/camera" + i + ".jpg", i, servidorImagenes, clienteDeteccionCaras, nombreGaleria, directorio);
+        /*for(int i = 0; i < 200; i++){
+            ProcesamientoImagenes faceDt = new ProcesamientoImagenes("camera_images_TEST/camera" + i + ".jpg", i, servidorImagenes, clienteDeteccionCaras, nombreGaleria, directorio, 0.7);
             ejecutor.execute(faceDt);            
         }
         
@@ -74,21 +82,34 @@ public class FaceDetection {
         while (!ejecutor.isTerminated()) {
         }
         
-        //
+        
         System.out.println("Finalizaron todos los hilos...");
         long millis_after = System.currentTimeMillis();
         
         long tiempo = (millis_after - millis_before ) / 1000;
-        System.out.println(String.format("Tiempo de ejecucion %.2f segundos", (float)tiempo));
+        System.out.println(String.format("Tiempo de ejecucion %.2f segundos", (float)tiempo));*/
       
         //Cogemos 200 cuadros
-       // ArrayList<Mat> arregloImagenes = new ArrayList<>(200);
-        /*Camara camara2 = new Camara("rtsp://192.168.137.172/profile2/media.smp");
+        ArrayList<Mat> arregloImagenes = new ArrayList<>(50);
+        Camara camara2 = new Camara("rtsp://192.168.137.172/profile2/media.smp");
         camara2.abrirCamara();      //empieza a enviar datos.
-        for(int i = 0; i < 200; i++){
+        for(int i = 0; i < 50; i++){
             Mat imagen = camara2.obtenerCuadro();
             arregloImagenes.add(imagen);
-        }*/
+        }
+        camara2.cerrarCamara();
+        
+        
+        for(int i = 0; i < 50; i++){
+            ProcesamientoImagenes faceDt = new ProcesamientoImagenes(arregloImagenes.get(i), i, servidorImagenes, clienteDeteccionCaras, nombreGaleria, directorio, 0.7);
+            //ProcesamientoImagenes faceDt = new ProcesamientoImagenes("camera_images/camera" + i + ".jpg", i, servidorImagenes, clienteDeteccionCaras, nombreGaleria, directorio, 0.7);
+            ejecutor.execute(faceDt);            
+        }
+        
+        ejecutor.shutdown();
+
+        while (!ejecutor.isTerminated()) {
+        }
         
         //Ahora en cada cuadro buscamos si hay caras (para no usar llamadas innecesarias), para mandarlas a Kairos...        
         

@@ -7,6 +7,7 @@ package facedetection;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
+import com.sun.xml.internal.fastinfoset.util.CharArray;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -14,6 +15,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.omg.PortableServer.REQUEST_PROCESSING_POLICY_ID;
 
 
 /**
@@ -188,11 +190,14 @@ public class DeteccionCaras {
      */
     public String reconocer(String rutaImagen, String galeria, double probabilidadMinima){
         try{
-            String probabilidad = "0.7";
             
-            if(probabilidadMinima != 0){
-                probabilidad = Double.toString(probabilidadMinima);
+            if(probabilidadMinima > 1.0){
+                System.out.println("Probabilidad inválida (" + probabilidadMinima + ")");
+                return "nadie";
             }
+            
+            String probabilidad;
+            probabilidad = Double.toString(probabilidadMinima);
             
             String request = "{\"url\":\"" + rutaImagen + "\",\"gallery_name\":\"" + galeria + "\",\"minHeadScale\":\".0625\",\"threshold\":\""+ probabilidad + "\",\"selector\":\"SETPOSE\"}";
             
@@ -212,8 +217,13 @@ public class DeteccionCaras {
                 String persona = this.procesarResultadosCarasReconocidas(ret);
                 return persona;
             }
+            else if(respuesta.getBody().toString().contains("No match found")){
+                return "nadie";
+            }
             else{
                 Bitacora log = new Bitacora();
+                
+                System.out.println(respuesta.getBody());
                 
                 //Obtenemos el arreglo del objeto JSON (Error)
                 JSONArray arreglo = respuesta.getBody().getArray();
@@ -250,16 +260,15 @@ public class DeteccionCaras {
                 log.registarEnBitacora("log_errores","errores.txt", str.toString(), Bitacora.SEVERE);
                 
                 //Escribir que paso
-                return null;
+                return "nadie";
             }
         }
         catch(Exception e){
             e.printStackTrace();
-            return null;
+            return "nadie";
         }
     }
-    
-    
+        
     /**
      * Extraemos los resultados devueltos por Kairos dentro del objeto JSON.
      * @param resultados
@@ -329,7 +338,7 @@ public class DeteccionCaras {
             //Necesitamos un multimap para guardar los porcentajes de match
             //para cada nombre
            double promedioMasAlto = 0.0;
-           int j = 0;
+           int j = -1;
            ArrayList<String> nombres = new ArrayList<>();
            ArrayList<Double> promedios = new ArrayList<>();
 
@@ -349,11 +358,13 @@ public class DeteccionCaras {
                     i++;
                 }
                 promedio = promedio / i;
+                System.out.println("Persona: " + item.getKey() + ", promedio: " + promedio);
                 promedios.add(promedio);  
                 
                 
                 if(promedio > promedioMasAlto){
                     j++;
+                    promedioMasAlto = promedio;
                 }
             }
             
@@ -361,6 +372,17 @@ public class DeteccionCaras {
             try{
                 String personaProbable = nombres.get(j);
                 String[] nombreApellido = personaProbable.split("-");
+                
+                //Mayuscula la primera letra del nombre y apellido
+                char[] nombreArray = nombreApellido[0].toCharArray();
+                nombreArray[0] = Character.toUpperCase(nombreArray[0]);
+                nombreApellido[0] = nombreArray.toString();
+                
+                char[] apellidoArray = nombreApellido[1].toCharArray();
+                apellidoArray[0] = Character.toUpperCase(apellidoArray[0]);
+                nombreApellido[0] = apellidoArray.toString();
+                    
+                
                 return nombreApellido[0] + " " + nombreApellido[1];
             }
             catch(IndexOutOfBoundsException e){
