@@ -51,12 +51,12 @@ public class Camara {
         }
         
         if(!camara.isOpened()){
-            System.out.println("Error al abrir la cámara.");
+            System.out.println("Error al abrir la camara.");
             this.camaraAbierta = false;
             
         }
         else{
-            System.out.println("Cámara OK.");
+            System.out.println("Camara OK.");
             this.camaraAbierta = true;
         }
         

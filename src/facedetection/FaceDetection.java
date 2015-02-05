@@ -41,20 +41,9 @@ public class FaceDetection {
         
         DeteccionCaras clienteDeteccionCaras = new DeteccionCaras(appId, appKey);
         
-        //cliente.reconocer("https://www.dropbox.com/s/f0lftfsmaq63sza/35.jpg?dl=1", nombreGaleria, 0.6);
-        
-        String dbxKey = "cuiclds3bj72a53";
-        String dbxSecret = "m44th47fwrn9d0t";
-        ServidorImagenes servidorImagenes = new ServidorImagenes(dbxKey, dbxSecret);
-        servidorImagenes.conectarADropbox("token.txt","tnFace/1.0");
-        
-        //servidorImagenes.subirArchivo("C:\\Users\\Eduardo\\Documents\\NetBeansProjects\\FaceDetection\\camera_images_TEST\\35.jpg", "/35.jpg");
-        /*String url2 = servidorImagenes.obtenerURLDescarga("/35.jpg");
-        clienteDeteccionCaras.reconocer(url2,nombreGaleria, 0.6);*/
-        
-        //probar los hilos
-        long millis_before = System.currentTimeMillis();
-        ExecutorService ejecutor = Executors.newFixedThreadPool(13);     //4 threads al mismo tiempo...
+        //clienteDeteccionCaras.enrolar("https://www.dropbox.com/s/89s7ne23f7y18ta/tomi1.jpg?dl=1", "tomislav-topic", nombreGaleria);
+        //clienteDeteccionCaras.enrolar("https://www.dropbox.com/s/h4jr1zz98hwbjjx/tomi2.jpg?dl=1", "tomislav-topic", nombreGaleria);
+            
         
         //Directorio de trabajo
         String directorio = null;
@@ -71,23 +60,16 @@ public class FaceDetection {
         
         System.out.println(directorio);
         
-        //Creamos los hilos...
-        /*for(int i = 0; i < 200; i++){
-            ProcesamientoImagenes faceDt = new ProcesamientoImagenes("camera_images_TEST/camera" + i + ".jpg", i, servidorImagenes, clienteDeteccionCaras, nombreGaleria, directorio, 0.7);
-            ejecutor.execute(faceDt);            
-        }
-        
-        ejecutor.shutdown();
-
-        while (!ejecutor.isTerminated()) {
-        }
-        
-        
-        System.out.println("Finalizaron todos los hilos...");
-        long millis_after = System.currentTimeMillis();
-        
-        long tiempo = (millis_after - millis_before ) / 1000;
-        System.out.println(String.format("Tiempo de ejecucion %.2f segundos", (float)tiempo));*/
+        //Servidor Dropbox
+        System.out.println("Ruta de archivo token: " + directorio + "/token.txt");
+        String dbxKey = "cuiclds3bj72a53";
+        String dbxSecret = "m44th47fwrn9d0t";
+        ServidorImagenes servidorImagenes = new ServidorImagenes(dbxKey, dbxSecret);
+        servidorImagenes.conectarADropbox(directorio + "/token.txt","tnFace/1.0");
+                
+        //probar los hilos
+        long millis_before = System.currentTimeMillis();
+        ExecutorService ejecutor = Executors.newFixedThreadPool(5);     //4 threads al mismo tiempo...
       
         //Cogemos 200 cuadros
         ArrayList<Mat> arregloImagenes = new ArrayList<>(50);
@@ -95,21 +77,36 @@ public class FaceDetection {
         camara2.abrirCamara();      //empieza a enviar datos.
         for(int i = 0; i < 50; i++){
             Mat imagen = camara2.obtenerCuadro();
-            arregloImagenes.add(imagen);
+            ProcesamientoImagenes faceDt = new ProcesamientoImagenes(imagen, i, servidorImagenes, clienteDeteccionCaras, nombreGaleria, directorio, 0.6);
+            //arregloImagenes.add(imagen);
+            ejecutor.execute(faceDt); 
         }
+        
+        /*synchronized(mutex){
+            if(personaEncontrada){
+                ejecutor.shutdownNow();
+            }
+        }*/
+        
         camara2.cerrarCamara();
         
         
-        for(int i = 0; i < 50; i++){
+        /*for(int i = 0; i < 50; i++){
             ProcesamientoImagenes faceDt = new ProcesamientoImagenes(arregloImagenes.get(i), i, servidorImagenes, clienteDeteccionCaras, nombreGaleria, directorio, 0.7);
             //ProcesamientoImagenes faceDt = new ProcesamientoImagenes("camera_images/camera" + i + ".jpg", i, servidorImagenes, clienteDeteccionCaras, nombreGaleria, directorio, 0.7);
             ejecutor.execute(faceDt);            
-        }
+        }*/
         
         ejecutor.shutdown();
-
+        
         while (!ejecutor.isTerminated()) {
         }
+        
+        System.out.println("Finalizaron todos los hilos...");
+        long millis_after = System.currentTimeMillis();
+        
+        long tiempo = (millis_after - millis_before ) / 1000;
+        System.out.println(String.format("Tiempo de ejecucion %.2f segundos", (float)tiempo));
         
         //Ahora en cada cuadro buscamos si hay caras (para no usar llamadas innecesarias), para mandarlas a Kairos...        
         

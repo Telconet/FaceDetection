@@ -63,6 +63,7 @@ public class ServidorImagenes {
         
         File archivoToken = null;
         if(rutaArchivoToken != null){
+            System.out.println(rutaArchivoToken);
             archivoToken = new File(rutaArchivoToken);
         }
         
@@ -170,7 +171,7 @@ public class ServidorImagenes {
 
                 try {
                     DbxEntry.File uploadedFile = cliente.uploadFile(rutaDbx, DbxWriteMode.force(), archivoASubir.length(), inputStream);
-                    System.out.println("Uploaded: " + uploadedFile.toString());
+                    System.out.println("Archivo subido: " + uploadedFile.toString());
                 } finally {
                     inputStream.close();
                 }

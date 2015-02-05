@@ -7,7 +7,7 @@ package facedetection;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
-import com.sun.xml.internal.fastinfoset.util.CharArray;
+import com.sun.xml.internal.fastinfoset.util.StringArray;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -15,8 +15,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.omg.PortableServer.REQUEST_PROCESSING_POLICY_ID;
-
 
 /**
  *
@@ -218,8 +216,14 @@ public class DeteccionCaras {
                 return persona;
             }
             else if(respuesta.getBody().toString().contains("No match found")){
+                System.out.println("KAIROS: No hubo match con nadie en la imagen");
                 return "nadie";
             }
+            else if(respuesta.getBody().toString().contains("no faces found")){
+                 System.out.println("KAIROS: No se encontraron caras en la imagen");
+                return "nadie";
+            }
+            
             else{
                 Bitacora log = new Bitacora();
                 
@@ -372,16 +376,7 @@ public class DeteccionCaras {
             try{
                 String personaProbable = nombres.get(j);
                 String[] nombreApellido = personaProbable.split("-");
-                
-                //Mayuscula la primera letra del nombre y apellido
-                char[] nombreArray = nombreApellido[0].toCharArray();
-                nombreArray[0] = Character.toUpperCase(nombreArray[0]);
-                nombreApellido[0] = nombreArray.toString();
-                
-                char[] apellidoArray = nombreApellido[1].toCharArray();
-                apellidoArray[0] = Character.toUpperCase(apellidoArray[0]);
-                nombreApellido[0] = apellidoArray.toString();
-                    
+                                 
                 
                 return nombreApellido[0] + " " + nombreApellido[1];
             }

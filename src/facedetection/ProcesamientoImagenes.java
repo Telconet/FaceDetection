@@ -67,6 +67,12 @@ public class ProcesamientoImagenes implements Runnable{
 
     @Override
     public void run() {
+        
+        //Si el hilo principal nos ha dicho que terminemos, salimos.
+        /*if(Thread.interrupted()){
+            return;
+        }*/
+        
        //Tomamos la imagen, y la procesamos con OpenCV para encontrar caras...
        System.out.println("Detectando caras para imagen " + this.indice);   
         
@@ -100,49 +106,53 @@ public class ProcesamientoImagenes implements Runnable{
        //Detectar...
        if(faceDetections.toArray().length > 0){
             //En esta seccion escribimos la imagen a disco con un cuadro señalando la cara..
-            Highgui.imwrite("camera_images/camera" + indice + ".jpg", imagen);
+            Highgui.imwrite(this.directorio + "/camera_images/camera" + indice + ".jpg", imagen);
            
             for (Rect rect : faceDetections.toArray()) {
             Core.rectangle(imagen, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height),
                     new Scalar(0, 255, 0));
             }
 
-           String filename = "detected_faces/output" + this.indice + ".jpg";
+           String filename = this.directorio + "/detected_faces/output" + this.indice + ".jpg";
             
            Highgui.imwrite(filename, imagen);
            System.out.println(String.format("Escribiendo %s", filename));
            //Fin del dibujo del cuadro de deteccion.
-           
+          
            //Si hay caras, mandamos a Kairos...
-           //Subimos fotos a Dropbox
-           this.imgServer.subirArchivo("camera_images/camera" + indice + ".jpg", "/camera" + indice + ".jpg");
+           //Subimos fotos a Dropbox (dentro o fuera de mutex)
+           this.imgServer.subirArchivo(this.directorio + "/camera_images/camera" + indice + ".jpg", "/camera" + indice + ".jpg");
            String url = this.imgServer.obtenerURLDescarga("/camera" + indice + ".jpg");
            
            synchronized(FaceDetection.mutex){
-                System.out.println("Hilo " + indice + " adquirió el mutex");
+                System.out.println("Hilo " + indice + " adquirio el mutex");               
+                
                 if(!FaceDetection.personaEncontrada){
-                     System.out.println("Imagen " + this.indice + " enviada a Kairos...");
+                     
+                    
+                    //Mandamos fotos a Kairos
+                     System.out.println("KAIROS: Imagen " + this.indice + " enviada a Kairos...");
                      String nombre = this.faceServer.reconocer(url, this.galeria, this.probabilidad);
                      
                      if(!nombre.equals("nadie")){
 
+                         //synchronized(FaceDetection.mutex){
+                            FaceDetection.personaEncontrada = true;
+                         //}
 
-                         FaceDetection.personaEncontrada = true;
-
-
-                         JFrame frame = new JFrame( "FaceRecon" );
-                         JOptionPane.showMessageDialog(frame, "¡Hola, " + nombre + "!");
+                         System.out.println("Hola " + nombre + ". (Imagen " + this.indice+ ")");
+                         System.exit(0);
+                         //
                      }
                      else{
-                         System.out.println("No se reconoció a nadie en la imagen " + indice);
+                         //System.out.println("No se reconocio a nadie en la imagen " + indice);
                      }
                 }
            }
-           System.out.println("Hilo " + indice + " liberó el mutex");
-           
-            
+           System.out.println("Hilo " + indice + " libero el mutex");
        }
        else{
+           
            System.out.println("No se detecto cara en la imagen " + indice);
        }
     }
