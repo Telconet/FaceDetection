@@ -69,9 +69,18 @@ public class ProcesamientoImagenes implements Runnable{
     public void run() {
         
         //Si el hilo principal nos ha dicho que terminemos, salimos.
-        /*if(Thread.interrupted()){
+        if(Thread.interrupted()){
             return;
-        }*/
+        }
+        
+        //Evitar trabajo innecesario...
+        synchronized(FaceDetection.mutex){
+            if(FaceDetection.personaEncontrada){
+                    //Si ya se encontro una cara, no procesamos.
+                    //System.out.println("Persona ya fue reconocida, saliendo del hilo...");
+                    return;
+            }
+        }
         
        //Tomamos la imagen, y la procesamos con OpenCV para encontrar caras...
        System.out.println("Detectando caras para imagen " + this.indice);   
@@ -125,34 +134,40 @@ public class ProcesamientoImagenes implements Runnable{
            String url = this.imgServer.obtenerURLDescarga("/camera" + indice + ".jpg");
            
            synchronized(FaceDetection.mutex){
-                System.out.println("Hilo " + indice + " adquirio el mutex");               
-                
-                if(!FaceDetection.personaEncontrada){
-                     
-                    
-                    //Mandamos fotos a Kairos
-                     System.out.println("KAIROS: Imagen " + this.indice + " enviada a Kairos...");
-                     String nombre = this.faceServer.reconocer(url, this.galeria, this.probabilidad);
-                     
-                     if(!nombre.equals("nadie")){
-
-                         //synchronized(FaceDetection.mutex){
-                            FaceDetection.personaEncontrada = true;
-                         //}
-
-                         System.out.println("Hola " + nombre + ". (Imagen " + this.indice+ ")");
-                         System.exit(0);
-                         //
-                     }
-                     else{
-                         //System.out.println("No se reconocio a nadie en la imagen " + indice);
-                     }
+                //System.out.println("Hilo " + indice + " adquirio el mutex");               
+                System.out.println("Persona ya fue reconocida, saliendo del hilo...");
+                if(FaceDetection.personaEncontrada){
+                    return;
                 }
            }
-           System.out.println("Hilo " + indice + " libero el mutex");
+                
+            //Mandamos fotos a Kairos
+            System.out.println("KAIROS: Imagen " + this.indice + " enviada a Kairos...");
+            String nombre = this.faceServer.reconocer(url, this.galeria, this.probabilidad);
+            
+           
+            synchronized(FaceDetection.mutex){
+               
+                if(FaceDetection.personaEncontrada){
+                        //Si ya se encontro una cara, no procesamos.
+                        System.out.println("Persona ya fue reconocida, saliendo del hilo...");
+                        return;
+                }
+
+               if(!nombre.equals("nadie")){
+
+                    synchronized(FaceDetection.mutex){
+                       FaceDetection.personaEncontrada = true;
+                    }
+
+                    System.out.println("Hola " + nombre + ". (Imagen " + this.indice+ ")");
+                }
+                else{
+                    System.out.println("No se reconocio a nadie en la imagen " + indice);
+                }
+           }
        }
        else{
-           
            System.out.println("No se detecto cara en la imagen " + indice);
        }
     }

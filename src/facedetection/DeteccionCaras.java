@@ -7,7 +7,6 @@ package facedetection;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
-import com.sun.xml.internal.fastinfoset.util.StringArray;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -362,7 +361,7 @@ public class DeteccionCaras {
                     i++;
                 }
                 promedio = promedio / i;
-                System.out.println("Persona: " + item.getKey() + ", promedio: " + promedio);
+                //System.out.println("Persona: " + item.getKey() + ", promedio: " + promedio);
                 promedios.add(promedio);  
                 
                 

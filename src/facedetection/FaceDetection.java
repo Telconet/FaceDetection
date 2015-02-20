@@ -30,6 +30,23 @@ public class FaceDetection {
     public static void main(String[] args) throws IOException, DbxException, InterruptedException, IllegalAccessException {
         // TODO code application logic here
         
+        //Prueba Vera
+        Vera gw = new Vera("172.16.2.2");
+        /*gw.ejecutarEscena(36);*/  //GET
+        
+        //gw.ejecutarHealing();
+        
+        /*gw.grabarEscena();
+        
+        Thread.sleep(10000);
+        gw.detenerGrabacionEscena();
+        
+        //gw.ListarEscena(36);
+        gw.listarGrabacionEscena();
+        
+        System.exit(0);*/
+        
+        
         //Cargamos la librerias nativas
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
                 
@@ -73,8 +90,9 @@ public class FaceDetection {
       
         //Cogemos 200 cuadros
         ArrayList<Mat> arregloImagenes = new ArrayList<>(50);
-        Camara camara2 = new Camara("rtsp://192.168.137.172/profile2/media.smp");
-        camara2.abrirCamara();      //empieza a enviar datos.
+        Camara camara2 = new Camara("rtsp://172.16.5.12/profile2/media.smp");
+        //rtsp://192.168.137.172/profile2/media.smp
+         camara2.abrirCamara();      //empieza a enviar datos.
         for(int i = 0; i < 50; i++){
             Mat imagen = camara2.obtenerCuadro();
             ProcesamientoImagenes faceDt = new ProcesamientoImagenes(imagen, i, servidorImagenes, clienteDeteccionCaras, nombreGaleria, directorio, 0.6);
@@ -82,11 +100,14 @@ public class FaceDetection {
             ejecutor.execute(faceDt); 
         }
         
-        /*synchronized(mutex){
-            if(personaEncontrada){
-                ejecutor.shutdownNow();
+        while(true){
+            synchronized(mutex){
+                if(personaEncontrada){
+                    ejecutor.shutdownNow();
+                    break;
+                }
             }
-        }*/
+        }
         
         camara2.cerrarCamara();
         
@@ -97,10 +118,10 @@ public class FaceDetection {
             ejecutor.execute(faceDt);            
         }*/
         
-        ejecutor.shutdown();
+        /*ejecutor.shutdown();
         
         while (!ejecutor.isTerminated()) {
-        }
+        }*/
         
         System.out.println("Finalizaron todos los hilos...");
         long millis_after = System.currentTimeMillis();
