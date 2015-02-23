@@ -162,7 +162,7 @@ public class Vera {
     }
     
     public boolean ejecutarHealing(){
-        try {
+         try {
             String url = "http://" + ip + "/";
              
             String solicitud = "port_49451/upnp/control/dev_1";
@@ -176,9 +176,11 @@ public class Vera {
                 .header("Accept", "text/xml, text/html, application/xml, text/javascript, */*").header("MIME-Version", "1.0").
                      header("Authorization","Digest username=\"ttopic\", realm=\"HomeControl\", nonce=\"fbd3a229f4d41d12d8ba073cd8ae2f91\", uri=\"/port_49451/upnp/control/dev_1\", response=\"9764724d2906b3d73387e2c9deeada6e\", qop=auth, nc=0000019f, cnonce=\"6e5d39dad65c2c38\"")
                      .header("X-Requested-with", "XMLHttpRequest").header("X-Prototype-Version", "1.7").header("SOAPACTION", "\"urn:schemas-micasaverde-org:service:ZWaveNetwork:1#HealNetwork\"").
-                     header("Referer", "http://172.16.2.2/cmh/").header("Pragma", "no-cache").header("Cache-Control", "no-cache").body(xmlBytes).asString();
+                     header("Referer", "http://" + ip + "/cmh/").header("Pragma", "no-cache").header("Cache-Control", "no-cache").body(xmlBytes).asString();
              
              if(respuesta != null){
+                 Bitacora log = new Bitacora();
+                 log.registarEnBitacora("healing_status.txt", "healing_status.txt", respuesta.getBody(), Bitacora.INFO);
                  System.out.println(respuesta.getBody());
              }
             return true;
