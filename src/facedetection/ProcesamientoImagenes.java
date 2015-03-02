@@ -4,13 +4,8 @@
  */
 package facedetection;
 
-import java.io.InputStream;
-import java.net.URL;
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfRect;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
@@ -31,19 +26,22 @@ public class ProcesamientoImagenes implements Runnable{
     private String galeria;
     private double probabilidad;
     private String urlImagen;
-    private String persona;
     private String directorio;
+    private HiloProcesamientoCamara nuestroHilo;
+    private int id;
    
     
-    public ProcesamientoImagenes(Mat imagen, int indice, ServidorImagenes imgServer, DeteccionCaras faceServer, String galeria, String directorioTrabajo, double probabilidad){
+    public ProcesamientoImagenes(Mat imagen, int indice, ServidorImagenes imgServer, DeteccionCaras faceServer, String galeria, String directorioTrabajo, 
+                                    double probabilidad, HiloProcesamientoCamara nuestroHilo, int id){
         this.imagen = imagen;
         this.indice = indice;
         this.imgServer = imgServer;
         this.faceServer = faceServer;
         this.urlImagen = null;
-        this.persona = null;
         this.galeria = galeria;
         this.probabilidad = probabilidad;
+        this.nuestroHilo = nuestroHilo;
+        this.id = id;
         
         //Obtenemos el directorio de trabajo
         /*URL location = ProcesamientoImagenes.class.getProtectionDomain().getCodeSource().getLocation();
@@ -53,7 +51,7 @@ public class ProcesamientoImagenes implements Runnable{
         this.directorio = directorioTrabajo;
     }
     
-    public ProcesamientoImagenes(String urlImagen, int indice, ServidorImagenes imgServer, DeteccionCaras faceServer, String galeria, String directorioTrabajo, double probabilidad){
+    /*public ProcesamientoImagenes(String urlImagen, int indice, ServidorImagenes imgServer, DeteccionCaras faceServer, String galeria, String directorioTrabajo, double probabilidad){
         this.imagen = null;
         this.indice = indice;
         this.imgServer = imgServer;
@@ -63,7 +61,7 @@ public class ProcesamientoImagenes implements Runnable{
         this.galeria = galeria;
         this.directorio = directorioTrabajo;  
         this.probabilidad = probabilidad;
-    }
+    }*/
 
     @Override
     public void run() {
@@ -74,8 +72,15 @@ public class ProcesamientoImagenes implements Runnable{
         }
         
         //Evitar trabajo innecesario...
-        synchronized(FaceDetection.mutex){
+        /*synchronized(FaceDetection.mutex){
             if(FaceDetection.personaEncontrada){
+                    //Si ya se encontro una cara, no procesamos.
+                    //System.out.println("Persona ya fue reconocida, saliendo del hilo...");
+                    return;
+            }
+        }*/
+        synchronized(nuestroHilo.mutex){
+            if(nuestroHilo.personaDetectada){
                     //Si ya se encontro una cara, no procesamos.
                     //System.out.println("Persona ya fue reconocida, saliendo del hilo...");
                     return;
@@ -89,7 +94,6 @@ public class ProcesamientoImagenes implements Runnable{
 
        String recurso = null;
        recurso = directorio + "/recursos/haarcascade_frontalface_alt.xml";
-       //System.out.println(recurso);
 
        faceDetector = new CascadeClassifier(recurso);
        
@@ -101,10 +105,10 @@ public class ProcesamientoImagenes implements Runnable{
        MatOfRect faceDetections = new MatOfRect();
        
        //Abrimos la imagen
-       if(this.imagen == null){
+       /*if(this.imagen == null){
            //usampos URL
            this.imagen = Highgui.imread(this.urlImagen);
-       }
+       }*/
 
        assert this.imagen != null;
 
@@ -122,6 +126,7 @@ public class ProcesamientoImagenes implements Runnable{
                     new Scalar(0, 255, 0));
             }
 
+           
            String filename = this.directorio + "/detected_faces/output" + this.indice + ".jpg";
             
            Highgui.imwrite(filename, imagen);
@@ -130,13 +135,20 @@ public class ProcesamientoImagenes implements Runnable{
           
            //Si hay caras, mandamos a Kairos...
            //Subimos fotos a Dropbox (dentro o fuera de mutex)
-           this.imgServer.subirArchivo(this.directorio + "/camera_images/camera" + indice + ".jpg", "/camera" + indice + ".jpg");
-           String url = this.imgServer.obtenerURLDescarga("/camera" + indice + ".jpg");
+           this.imgServer.subirArchivo(this.directorio + "/camera_images/camera" + indice + ".jpg", "/" + id +"/camera" + indice + ".jpg");
+           String url = this.imgServer.obtenerURLDescarga("/" + id + "/camera" + indice + ".jpg");
            
-           synchronized(FaceDetection.mutex){
+           /*synchronized(FaceDetection.mutex){
                 //System.out.println("Hilo " + indice + " adquirio el mutex");               
                 System.out.println("Persona ya fue reconocida, saliendo del hilo...");
                 if(FaceDetection.personaEncontrada){
+                    return;
+                }
+           }*/
+           synchronized(nuestroHilo.mutex){
+                //System.out.println("Hilo " + indice + " adquirio el mutex");               
+                System.out.println("Persona ya fue reconocida, saliendo del hilo...");
+                if(nuestroHilo.personaDetectada){
                     return;
                 }
            }
@@ -146,9 +158,11 @@ public class ProcesamientoImagenes implements Runnable{
             String nombre = this.faceServer.reconocer(url, this.galeria, this.probabilidad);
             
            
-            synchronized(FaceDetection.mutex){
-               
-                if(FaceDetection.personaEncontrada){
+            //synchronized(FaceDetection.mutex){
+            synchronized(nuestroHilo.persona){
+                
+                //if(FaceDetection.personaEncontrada){
+                if(nuestroHilo.personaDetectada){
                         //Si ya se encontro una cara, no procesamos.
                         System.out.println("Persona ya fue reconocida, saliendo del hilo...");
                         return;
@@ -156,8 +170,11 @@ public class ProcesamientoImagenes implements Runnable{
 
                if(!nombre.equals("nadie")){
 
-                    synchronized(FaceDetection.mutex){
-                       FaceDetection.personaEncontrada = true;
+                    //synchronized(FaceDetection.mutex){
+                    synchronized(nuestroHilo.mutex){
+                       //FaceDetection.personaEncontrada = true;
+                       nuestroHilo.personaDetectada = true;
+                       nuestroHilo.persona = nombre;
                     }
 
                     System.out.println("Hola " + nombre + ". (Imagen " + this.indice+ ")");

@@ -30,11 +30,12 @@ import org.w3c.dom.*;
 public class Vera {
     
     private String ip;
+    private int idVera;
     
-    public Vera(String ip){
+    public Vera(String ip, int idVera){
         this.ip = ip;
+        this.idVera = idVera;
     }
-   
     
     /**
      * Usa solicitud GET para ejecutar escena el el Vera3.
