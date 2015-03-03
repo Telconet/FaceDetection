@@ -12,15 +12,21 @@ import com.dropbox.core.DbxException;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import org.opencv.core.*;
 
 
 
 public class FaceDetection{
     
-    public static boolean personaEncontrada = false;          //solo para pruebas
+    //public static boolean personaEncontrada = false;          //solo para pruebas
     public static final Object mutex = new Object();
    
 
@@ -82,11 +88,13 @@ public class FaceDetection{
         System.out.println(directorioTrabajo);
         
         //Servidor Dropbox
-        System.out.println("Ruta de archivo token: " + directorioTrabajo + "/token.txt");
+        System.out.println(config.obtenerParametro(Configuracion.ARCHIVO_TOKEN_DBX).trim());
         String dbxKey = config.obtenerParametro(Configuracion.KEY_DBX); //"cuiclds3bj72a53";
         String dbxSecret = config.obtenerParametro(Configuracion.SECRETO_DBX); //"m44th47fwrn9d0t";
         ServidorImagenes servidorImagenes = new ServidorImagenes(dbxKey, dbxSecret);
-        String rutaArchivoToken = config.obtenerParametro(Configuracion.ARCHIVO_TOKEN_DBX); 
+        String rutaArchivoToken = config.obtenerParametro(Configuracion.ARCHIVO_TOKEN_DBX).trim(); 
+        
+        f = new File(rutaArchivoToken);
         if(!f.exists() || f.isDirectory()){
             System.out.println("¡Ups! El archivo del token de Dropbox (" + rutaArchivoToken +") no existe.");
             System.exit(-1);
@@ -161,20 +169,34 @@ public class FaceDetection{
         }
         
         //Pool de hilos...
-        ExecutorService ejecutor = Executors.newFixedThreadPool(cores + 1);
+        BlockingQueue<Runnable> colaDeEspera = new LinkedBlockingQueue<>();
+        ThreadPoolExecutor ejecutor = new ThreadPoolExecutor(cores, cores, cores, TimeUnit.DAYS, colaDeEspera);
         
         //Hilos de reconocimiento.
-        ArrayList<HiloProcesamientoCamara> hilosCamaras = new ArrayList<>(args.length);
+        ArrayList<Thread> hilosCamaras = new ArrayList<>();
         
         for(int i = 0; i < ipCamaras.length; i++){
-            HiloProcesamientoCamara hiloCamara = new HiloProcesamientoCamara("rtsp://" + ipCamaras[i] + "/profile2/media.smp", directorioTrabajo + "/camara" + ipCamaras[i],
+            
+            
+            HiloProcesamientoCamara hiloCamara = new HiloProcesamientoCamara(ipCamaras[i], directorioTrabajo.trim(),
                     nombreGaleria, probabilidad, servidorImagenes, clienteDeteccionCaras, ubicacionCamaras[i], ejecutor, i);
+            
+            //Creamos hilo e iniciamos reconocimiento
             Thread hilo = new Thread(hiloCamara);
-            hilosCamaras.add(hiloCamara);
-            hilo.start();      
-        }   
+            hilosCamaras.add(hilo);
+            hilo.start();    
+            
+        }  
         
-        //Usar hilo.join() o ejecutor.shutdown();
-        ejecutor.shutdown();
+        for(int i = 0; i < hilosCamaras.size(); i++){
+            Thread tmp = hilosCamaras.get(i);
+            tmp.join();
+            
+        }
+        
+        //ejecutor.awaitTermination(cores, TimeUnit.);
+        
+        //Usar hilo.join() o ejecutor.shutdown(); NO USAR shutdown ya que cualquier tarea enviada despues del shutdown sera rechazada
+        
     }
 }

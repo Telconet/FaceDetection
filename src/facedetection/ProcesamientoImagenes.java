@@ -27,12 +27,13 @@ public class ProcesamientoImagenes implements Runnable{
     private double probabilidad;
     private String urlImagen;
     private String directorio;
+    private String directorioImagenes;
     private HiloProcesamientoCamara nuestroHilo;
-    private int id;
+    private String id;
    
     
     public ProcesamientoImagenes(Mat imagen, int indice, ServidorImagenes imgServer, DeteccionCaras faceServer, String galeria, String directorioTrabajo, 
-                                    double probabilidad, HiloProcesamientoCamara nuestroHilo, int id){
+                                    String directorioImagenes, double probabilidad, HiloProcesamientoCamara nuestroHilo, String id){
         this.imagen = imagen;
         this.indice = indice;
         this.imgServer = imgServer;
@@ -49,6 +50,7 @@ public class ProcesamientoImagenes implements Runnable{
         this.directorio = this.directorio.substring(1);
         this.directorio = this.directorio.replace("dist/FaceDetection.jar", "");*/
         this.directorio = directorioTrabajo;
+        this.directorioImagenes = directorioImagenes;
     }
     
     /*public ProcesamientoImagenes(String urlImagen, int indice, ServidorImagenes imgServer, DeteccionCaras faceServer, String galeria, String directorioTrabajo, double probabilidad){
@@ -66,127 +68,116 @@ public class ProcesamientoImagenes implements Runnable{
     @Override
     public void run() {
         
-        //Si el hilo principal nos ha dicho que terminemos, salimos.
-        if(Thread.interrupted()){
-            return;
-        }
-        
-        //Evitar trabajo innecesario...
-        /*synchronized(FaceDetection.mutex){
-            if(FaceDetection.personaEncontrada){
-                    //Si ya se encontro una cara, no procesamos.
-                    //System.out.println("Persona ya fue reconocida, saliendo del hilo...");
-                    return;
-            }
-        }*/
-        synchronized(nuestroHilo.mutex){
-            if(nuestroHilo.personaDetectada){
-                    //Si ya se encontro una cara, no procesamos.
-                    //System.out.println("Persona ya fue reconocida, saliendo del hilo...");
-                    return;
-            }
-        }
-        
-       //Tomamos la imagen, y la procesamos con OpenCV para encontrar caras...
-       System.out.println("Detectando caras para imagen " + this.indice);   
-        
-       CascadeClassifier faceDetector;        
-
-       String recurso = null;
-       recurso = directorio + "/recursos/haarcascade_frontalface_alt.xml";
-
-       faceDetector = new CascadeClassifier(recurso);
-       
-       if(faceDetector.empty()){
-           System.out.println("Clasificador de caras no cargado... No se puede procesar la imagen.");
-           return;
-       }
-       
-       MatOfRect faceDetections = new MatOfRect();
-       
-       //Abrimos la imagen
-       /*if(this.imagen == null){
-           //usampos URL
-           this.imagen = Highgui.imread(this.urlImagen);
-       }*/
-
-       assert this.imagen != null;
-
-       //Detectamos la cara 
-       faceDetector.detectMultiScale(imagen, faceDetections);
-       System.out.println(String.format("OpenCV detecto %s caras en la imagen camera%d.jpg", faceDetections.toArray().length, this.indice)); 
-
-       //Detectar...
-       if(faceDetections.toArray().length > 0){
-            //En esta seccion escribimos la imagen a disco con un cuadro señalando la cara..
-            Highgui.imwrite(this.directorio + "/camera_images/camera" + indice + ".jpg", imagen);
-           
-            for (Rect rect : faceDetections.toArray()) {
-            Core.rectangle(imagen, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height),
-                    new Scalar(0, 255, 0));
+        try{
+            //Usamos try para poder usar finally, y llamar imagen.release() para evitar memory leak
+            //Si el hilo principal nos ha dicho que terminemos, salimos.
+            if(Thread.interrupted()){
+                imagen = null;
+                return;
             }
 
-           
-           String filename = this.directorio + "/detected_faces/output" + this.indice + ".jpg";
-            
-           Highgui.imwrite(filename, imagen);
-           System.out.println(String.format("Escribiendo %s", filename));
-           //Fin del dibujo del cuadro de deteccion.
-          
-           //Si hay caras, mandamos a Kairos...
-           //Subimos fotos a Dropbox (dentro o fuera de mutex)
-           this.imgServer.subirArchivo(this.directorio + "/camera_images/camera" + indice + ".jpg", "/" + id +"/camera" + indice + ".jpg");
-           String url = this.imgServer.obtenerURLDescarga("/" + id + "/camera" + indice + ".jpg");
-           
-           /*synchronized(FaceDetection.mutex){
-                //System.out.println("Hilo " + indice + " adquirio el mutex");               
-                System.out.println("Persona ya fue reconocida, saliendo del hilo...");
-                if(FaceDetection.personaEncontrada){
-                    return;
-                }
-           }*/
-           synchronized(nuestroHilo.mutex){
-                //System.out.println("Hilo " + indice + " adquirio el mutex");               
-                System.out.println("Persona ya fue reconocida, saliendo del hilo...");
-                if(nuestroHilo.personaDetectada){
-                    return;
-                }
-           }
-                
-            //Mandamos fotos a Kairos
-            System.out.println("KAIROS: Imagen " + this.indice + " enviada a Kairos...");
-            String nombre = this.faceServer.reconocer(url, this.galeria, this.probabilidad);
-            
-           
-            //synchronized(FaceDetection.mutex){
-            synchronized(nuestroHilo.persona){
-                
-                //if(FaceDetection.personaEncontrada){
+            synchronized(nuestroHilo.mutex){
                 if(nuestroHilo.personaDetectada){
                         //Si ya se encontro una cara, no procesamos.
-                        System.out.println("Persona ya fue reconocida, saliendo del hilo...");
+                        //System.out.println("Persona ya fue reconocida, saliendo del hilo...");
+                        imagen = null;
                         return;
                 }
+            }
 
-               if(!nombre.equals("nadie")){
+           //Tomamos la imagen, y la procesamos con OpenCV para encontrar caras...
+           System.out.println("Detectando caras para imagen " + this.indice);   
 
-                    //synchronized(FaceDetection.mutex){
-                    synchronized(nuestroHilo.mutex){
-                       //FaceDetection.personaEncontrada = true;
-                       nuestroHilo.personaDetectada = true;
-                       nuestroHilo.persona = nombre;
+           CascadeClassifier faceDetector;        
+
+           String recurso = null;
+           recurso = directorio + "/recursos/haarcascade_frontalface_alt.xml"; //"/recursos/haarcascade_frontalface_alt.xml";
+
+           faceDetector = new CascadeClassifier(recurso);
+
+           if(faceDetector.empty()){
+               System.out.println("Clasificador de caras no cargado... No se puede procesar la imagen.");
+               return;
+           }
+
+           MatOfRect faceDetections = new MatOfRect();
+
+
+
+           assert this.imagen != null;
+
+           //Detectamos la cara 
+           faceDetector.detectMultiScale(imagen, faceDetections);
+           System.out.println(String.format("OpenCV detecto %s caras en la imagen camera%d.jpg", faceDetections.toArray().length, this.indice)); 
+
+           //Detectar...
+           if(faceDetections.toArray().length > 0){
+                //Escribir imagen para Dbx
+                Highgui.imwrite(this.directorioImagenes + "/camara" + indice + ".jpg", imagen);
+
+                //En esta seccion escribimos la imagen a disco con un cuadro señalando la cara..
+                /*for (Rect rect : faceDetections.toArray()) {
+                Core.rectangle(imagen, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height),
+                        new Scalar(0, 255, 0));
+                }
+
+
+               String filename = this.directorioImagenes + "/detected_faces/output" + this.indice + ".jpg";
+
+               Highgui.imwrite(filename, imagen);*/
+               //System.out.println(String.format("Escribiendo %s", filename));
+               //Fin del dibujo del cuadro de deteccion.
+
+               //Si hay caras, mandamos a Kairos...
+               this.imgServer.subirArchivo(this.directorioImagenes + "/camara" + indice + ".jpg", "/" + id +"/camara" + indice + ".jpg");
+               String url = this.imgServer.obtenerURLDescarga("/" + id + "/camara" + indice + ".jpg");
+
+               synchronized(nuestroHilo.mutex){        
+                    if(nuestroHilo.personaDetectada){
+                         imagen = null;
+                        System.out.println("Persona ya fue reconocida, saliendo del hilo...");
+                        return;
+                    }
+               }
+
+                //Mandamos fotos a Kairos
+                System.out.println("KAIROS: Imagen " + this.indice + " enviada a Kairos...");
+                String nombre = this.faceServer.reconocer(url, this.galeria, this.probabilidad);
+                //String nombre = "nadie";
+
+                //synchronized(FaceDetection.mutex){
+                synchronized(nuestroHilo.mutex){
+
+                    //if(FaceDetection.personaEncontrada){
+                    if(nuestroHilo.personaDetectada){
+                            //Si ya se encontro una cara, no procesamos.
+                            System.out.println("Persona ya fue reconocida, saliendo del hilo...");
+                            return;
                     }
 
-                    System.out.println("Hola " + nombre + ". (Imagen " + this.indice+ ")");
-                }
-                else{
-                    System.out.println("No se reconocio a nadie en la imagen " + indice);
-                }
+                   if(!nombre.equals("nadie")){
+                           nuestroHilo.personaDetectada = true;
+                           nuestroHilo.persona = nombre;
+                           imagen = null;
+                           System.out.println("Hola " + nombre + ". (Imagen " + this.indice+ ")");
+                           return;                
+                    }
+                    else{
+                        System.out.println("No se reconocio a nadie en la imagen " + indice);
+                    }
+               }
            }
-       }
-       else{
-           System.out.println("No se detecto cara en la imagen " + indice);
-       }
+           else{
+               System.out.println("No se detecto cara en la imagen " + indice);
+           }
+        }
+        catch(Exception e){
+            
+        }
+        finally{
+            this.imagen.release();
+            //System.out.println("Imagen " + indice + " liberada...");
+        }
     }
     
 }

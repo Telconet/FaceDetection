@@ -336,7 +336,7 @@ public class DeteccionCaras {
      */
     private String tabularResultdaos(Map<String,ArrayList<Double>> resultados){
        try{
-           
+            System.out.println("TABULANDO RESULTADOS...!");
             //No tomar en cuenta enrollment_timestamp
             //Necesitamos un multimap para guardar los porcentajes de match
             //para cada nombre

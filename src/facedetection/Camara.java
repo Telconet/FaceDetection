@@ -38,16 +38,23 @@ public class Camara {
         System.out.println(System.getProperty("java.library.path"));
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
         
+        
+        
 
         this.camara = new VideoCapture();
+        
         if(urlCamara == null){
           
             camara.open(this.dispositivo); //? camar
             //camara.ope
         }
         else{
-            
+            //CV_CAP_PROP_FPS = 5
             this.camara.open(this.urlCamara);
+            System.out.println("FPS: " + this.camara.get(5));
+           
+           
+            System.out.println(this.camara.get(5));
         }
         
         if(!camara.isOpened()){
@@ -77,6 +84,7 @@ public class Camara {
     }
     
     public Mat obtenerCuadro(){
+        //LEAK!!!
         if(this.camaraAbierta){
             Mat cuadro = new Mat();
             this.camara.read(cuadro); 
